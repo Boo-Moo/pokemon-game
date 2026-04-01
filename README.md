@@ -293,29 +293,13 @@ A: 建议切换到文字模式，或关闭其他占用资源的程序。
 - [ ] 成就系统
 - [ ] 音效和背景音乐
 
-## 🤝 贡献指南
-
-欢迎贡献代码！请遵循以下步骤：
-
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
-
-### 代码规范
-- 遵循PEP 8编码规范
-- 添加必要的注释和文档字符串
-- 保持模块化设计
-- 编写单元测试（如适用）
-
 ## 📄 许可证
 
 本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
 
 ## 🙏 致谢
 
-- 灵感来源于《宝可梦》系列游戏
+- 灵感来源于精灵抓宠类游戏
 - 感谢所有贡献者的支持和反馈
 
 ## 📞 联系方式
@@ -342,72 +326,4 @@ Pillow>=9.0.0
 
 # 音频支持（可选，用于添加音效）
 # pygame>=2.0.0
-```
-
-### `LICENSE`
-```txt
-MIT 许可协议
-
-版权所有 (c) 2026 小白
-
-特此免费授予任何获得本软件及相关文档文件（以下简称“软件”）副本的人士，
-无限制地处理该软件的权利，包括但不限于使用、复制、修改、合并、发布、
-分发、再许可和/或出售软件副本的权利，
-并允许软件的接收者进行上述操作，但须遵守以下条件：
-
-上述版权声明及本许可声明应包含于
-本软件的所有副本或实质性部分中。
-
-本软件按“原样”提供，不提供任何形式的明示或
-默示保证，包括但不限于对适销性、
-特定用途适用性及不侵权的保证。在任何情况下，
-作者或版权持有者均不对因本软件、
-本软件的使用或与本软件相关的
-任何索赔、损害或其他
-责任承担责任，无论该责任是基于合同、侵权或其他原因产生。
-```
-
-### `.gitignore`
-```gitignore
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-.venv/
-ENV/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-
-# Game data
-player_*.json
-*.log
-
-# OS
-Thumbs.db
-.DS_Store
 ```
