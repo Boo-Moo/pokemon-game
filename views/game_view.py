@@ -14,7 +14,7 @@ class GameView(tk.Frame):
         super().__init__(parent)
         self.controller = controller
         self.wild_display_widgets = None
-        self.pokedex_detail_window = None  # 图鉴详情窗口
+        self.pokedex_detail_window = None
         self.setup_ui()
         self.update_stats()
 
@@ -22,12 +22,21 @@ class GameView(tk.Frame):
         """设置界面"""
         self.configure(bg='#2ecc71')
 
-        # 顶部状态栏
+        # 使用网格布局，固定各区域大小
+        self.grid_rowconfigure(0, weight=0)  # 状态栏
+        self.grid_rowconfigure(1, weight=1)  # 主要内容区域
+        self.grid_rowconfigure(2, weight=0)  # 消息区域
+        self.grid_columnconfigure(0, weight=1)
+
+        # 顶部状态栏（固定高度）
         self.setup_status_bar()
 
-        # 主要内容区域
+        # 主要内容区域（可扩展）
         main_frame = tk.Frame(self, bg='#2ecc71')
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        main_frame.grid(row=1, column=0, sticky='nsew', padx=10, pady=10)
+        main_frame.grid_rowconfigure(0, weight=1)
+        main_frame.grid_columnconfigure(0, weight=1)
+        main_frame.grid_columnconfigure(1, weight=1)
 
         # 左侧 - 野生精灵区域
         self.setup_wild_area(main_frame)
@@ -35,55 +44,91 @@ class GameView(tk.Frame):
         # 右侧 - 精灵图鉴区域
         self.setup_pokedex_area(main_frame)
 
-        # 底部按钮栏
+        # 底部按钮栏（固定高度）
         self.setup_bottom_buttons()
 
-        # 消息区域
+        # 底部消息区域（固定高度）
         self.setup_message_area()
 
     def setup_status_bar(self):
         """设置状态栏"""
-        status_frame = tk.Frame(self, bg='#27ae60', height=80)
-        status_frame.pack(fill=tk.X, padx=10, pady=5)
+        status_frame = tk.Frame(self, bg='#27ae60', height=100)
+        status_frame.grid(row=0, column=0, sticky='ew', padx=10, pady=5)
+        status_frame.grid_propagate(False)  # 固定高度
 
-        self.name_label = tk.Label(status_frame, text="",
+        # 玩家信息区域
+        info_frame = tk.Frame(status_frame, bg='#27ae60')
+        info_frame.pack(fill=tk.X, pady=5, padx=10)
+
+        self.name_label = tk.Label(info_frame, text="",
                                    font=("微软雅黑", 12, "bold"),
                                    bg='#27ae60', fg='#fff')
-        self.name_label.pack(side=tk.LEFT, padx=20, pady=10)
+        self.name_label.pack(side=tk.LEFT, padx=20)
 
-        self.score_label = tk.Label(status_frame, text="分数：0",
+        self.score_label = tk.Label(info_frame, text="分数：0",
                                     font=("微软雅黑", 12, "bold"),
                                     bg='#27ae60', fg='#ffd700')
-        self.score_label.pack(side=tk.LEFT, padx=20, pady=10)
+        self.score_label.pack(side=tk.LEFT, padx=20)
 
-        self.balls_label = tk.Label(status_frame, text="精灵球：0",
+        self.balls_label = tk.Label(info_frame, text="精灵球：0",
                                     font=("微软雅黑", 12, "bold"),
                                     bg='#27ae60', fg='#fff')
-        self.balls_label.pack(side=tk.LEFT, padx=20, pady=10)
+        self.balls_label.pack(side=tk.LEFT, padx=20)
 
-        self.pokemon_count_label = tk.Label(status_frame, text="图鉴：0只",
+        self.pokemon_count_label = tk.Label(info_frame, text="图鉴：0只",
                                             font=("微软雅黑", 12, "bold"),
                                             bg='#27ae60', fg='#fff')
-        self.pokemon_count_label.pack(side=tk.LEFT, padx=20, pady=10)
+        self.pokemon_count_label.pack(side=tk.LEFT, padx=20)
+
+        # 地点信息区域
+        location_frame = tk.Frame(status_frame, bg='#27ae60')
+        location_frame.pack(fill=tk.X, pady=5, padx=10)
+
+        self.location_label = tk.Label(location_frame, text="",
+                                       font=("微软雅黑", 11),
+                                       bg='#27ae60', fg='#ffd700')
+        self.location_label.pack(side=tk.LEFT, padx=20)
+
+        self.location_desc_label = tk.Label(location_frame, text="",
+                                            font=("微软雅黑", 9),
+                                            bg='#27ae60', fg='#bdc3c7')
+        self.location_desc_label.pack(side=tk.LEFT, padx=20)
 
     def setup_wild_area(self, parent):
         """设置野生精灵区域"""
         left_frame = tk.Frame(parent, bg='#27ae60', relief=tk.RAISED, bd=2)
-        left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        left_frame.grid(row=0, column=0, sticky='nsew', padx=5, pady=5)
 
-        tk.Label(left_frame, text="🌲 野外区域", font=("微软雅黑", 16, "bold"),
-                 bg='#27ae60', fg='#fff').pack(pady=10)
+        # 标题
+        title_label = tk.Label(left_frame, text="🌲 野外区域", font=("微软雅黑", 16, "bold"),
+                               bg='#27ae60', fg='#fff')
+        title_label.pack(pady=10)
 
-        # 野生精灵显示容器
-        self.wild_container = tk.Frame(left_frame, bg='#27ae60')
-        self.wild_container.pack(expand=True, pady=20)
+        # 野生精灵显示容器（可滚动）
+        wild_container_frame = tk.Frame(left_frame, bg='#27ae60')
+        wild_container_frame.pack(fill=tk.BOTH, expand=True, pady=10, padx=10)
+
+        # 创建Canvas和Scrollbar实现滚动
+        canvas = tk.Canvas(wild_container_frame, bg='#27ae60', highlightthickness=0)
+        scrollbar = tk.Scrollbar(wild_container_frame, orient=tk.VERTICAL, command=canvas.yview)
+        self.wild_container = tk.Frame(canvas, bg='#27ae60')
+
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas_window = canvas.create_window((0, 0), window=self.wild_container, anchor='nw')
+
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # 配置滚动区域
+        self.wild_container.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox('all')))
+        canvas.bind('<Configure>', lambda e: canvas.itemconfig(canvas_window, width=e.width))
 
         # 初始显示
         self.wild_placeholder = tk.Label(self.wild_container,
                                          text="✨ 点击下方按钮进入草丛 ✨",
                                          font=("微软雅黑", 14),
                                          bg='#27ae60', fg='#f1c40f')
-        self.wild_placeholder.pack(expand=True)
+        self.wild_placeholder.pack(expand=True, pady=50)
 
         # 战斗按钮区域
         battle_frame = tk.Frame(left_frame, bg='#27ae60')
@@ -107,11 +152,11 @@ class GameView(tk.Frame):
     def setup_pokedex_area(self, parent):
         """设置精灵图鉴区域"""
         right_frame = tk.Frame(parent, bg='#27ae60', relief=tk.RAISED, bd=2)
-        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        right_frame.grid(row=0, column=1, sticky='nsew', padx=5, pady=5)
 
         # 图鉴标题栏
         title_frame = tk.Frame(right_frame, bg='#27ae60')
-        title_frame.pack(fill=tk.X, pady=10)
+        title_frame.pack(fill=tk.X, pady=10, padx=10)
 
         tk.Label(title_frame, text="📖 精灵图鉴", font=("微软雅黑", 16, "bold"),
                  bg='#27ae60', fg='#fff').pack(side=tk.LEFT)
@@ -119,7 +164,7 @@ class GameView(tk.Frame):
         # 统计信息
         self.pokedex_stats = tk.Label(title_frame, text="", font=("微软雅黑", 10),
                                       bg='#27ae60', fg='#ffd700')
-        self.pokedex_stats.pack(side=tk.RIGHT, padx=10)
+        self.pokedex_stats.pack(side=tk.RIGHT)
 
         # 图鉴列表框架
         list_frame = tk.Frame(right_frame, bg='#2c3e50')
@@ -147,71 +192,133 @@ class GameView(tk.Frame):
         tip_label.pack(pady=5)
 
     def setup_bottom_buttons(self):
-        """设置底部按钮"""
-        bottom_frame = tk.Frame(self, bg='#27ae60')
-        bottom_frame.pack(fill=tk.X, padx=10, pady=10)
+        """设置底部按钮栏"""
+        bottom_frame = tk.Frame(self, bg='#27ae60', height=60)
+        bottom_frame.grid(row=2, column=0, sticky='ew', padx=10, pady=5)
+        bottom_frame.grid_propagate(False)
 
-        enter_btn = tk.Button(bottom_frame, text="🌿 进入草丛", font=("微软雅黑", 12, "bold"),
-                              bg='#f39c12', fg='#fff', padx=30, pady=10,
+        # 按钮容器
+        buttons_container = tk.Frame(bottom_frame, bg='#27ae60')
+        buttons_container.pack(expand=True, fill=tk.BOTH, padx=10)
+
+        # 第一行按钮
+        row1_frame = tk.Frame(buttons_container, bg='#27ae60')
+        row1_frame.pack(pady=2)
+
+        map_btn = tk.Button(row1_frame, text="🗺️ 世界地图", font=("微软雅黑", 12, "bold"),
+                            bg='#9b59b6', fg='#fff', padx=25, pady=8,
+                            command=self.open_map, cursor="hand2")
+        map_btn.pack(side=tk.LEFT, padx=5)
+
+        enter_btn = tk.Button(row1_frame, text="🌿 进入草丛", font=("微软雅黑", 12, "bold"),
+                              bg='#f39c12', fg='#fff', padx=25, pady=8,
                               command=self.enter_grass, cursor="hand2")
-        enter_btn.pack(side=tk.LEFT, padx=10)
+        enter_btn.pack(side=tk.LEFT, padx=5)
 
-        shop_btn = tk.Button(bottom_frame, text="🛒 商店 (10分/球)", font=("微软雅黑", 12),
-                             bg='#1abc9c', fg='#fff', padx=20, pady=10,
+        shop_btn = tk.Button(row1_frame, text="🛒 商店", font=("微软雅黑", 12, "bold"),
+                             bg='#1abc9c', fg='#fff', padx=25, pady=8,
                              command=self.open_shop, cursor="hand2")
-        shop_btn.pack(side=tk.LEFT, padx=10)
+        shop_btn.pack(side=tk.LEFT, padx=5)
 
-        # 显示模式切换按钮
-        mode_btn = tk.Button(bottom_frame, text="🎨 切换显示模式", font=("微软雅黑", 12),
-                             bg='#9b59b6', fg='#fff', padx=20, pady=10,
+        # 第二行按钮
+        row2_frame = tk.Frame(buttons_container, bg='#27ae60')
+        row2_frame.pack(pady=2)
+
+        mode_btn = tk.Button(row2_frame, text="🎨 切换模式", font=("微软雅黑", 12),
+                             bg='#9b59b6', fg='#fff', padx=20, pady=8,
                              command=self.switch_display_mode, cursor="hand2")
-        mode_btn.pack(side=tk.LEFT, padx=10)
+        mode_btn.pack(side=tk.LEFT, padx=5)
 
-        # 图鉴详情按钮
-        detail_btn = tk.Button(bottom_frame, text="📊 图鉴统计", font=("微软雅黑", 12),
-                               bg='#3498db', fg='#fff', padx=20, pady=10,
+        detail_btn = tk.Button(row2_frame, text="📊 图鉴统计", font=("微软雅黑", 12),
+                               bg='#3498db', fg='#fff', padx=20, pady=8,
                                command=self.show_pokedex_stats, cursor="hand2")
-        detail_btn.pack(side=tk.LEFT, padx=10)
+        detail_btn.pack(side=tk.LEFT, padx=5)
 
-        reset_btn = tk.Button(bottom_frame, text="🔄 重新开始", font=("微软雅黑", 12),
-                              bg='#e67e22', fg='#fff', padx=20, pady=10,
+        reset_btn = tk.Button(row2_frame, text="🔄 重置", font=("微软雅黑", 12),
+                              bg='#e67e22', fg='#fff', padx=20, pady=8,
                               command=self.reset_game, cursor="hand2")
-        reset_btn.pack(side=tk.LEFT, padx=10)
+        reset_btn.pack(side=tk.LEFT, padx=5)
 
-        exit_btn = tk.Button(bottom_frame, text="🚪 退出游戏", font=("微软雅黑", 12),
-                             bg='#c0392b', fg='#fff', padx=20, pady=10,
+        exit_btn = tk.Button(row2_frame, text="🚪 退出", font=("微软雅黑", 12),
+                             bg='#c0392b', fg='#fff', padx=20, pady=8,
                              command=self.exit_game, cursor="hand2")
-        exit_btn.pack(side=tk.RIGHT, padx=10)
+        exit_btn.pack(side=tk.LEFT, padx=5)
 
     def setup_message_area(self):
-        """设置消息区域"""
-        # 创建消息框架
-        message_frame = tk.Frame(self, bg='#2c3e50')
-        message_frame.pack(fill=tk.X, padx=10, pady=5)
+        """设置消息区域（固定在底部）"""
+        message_frame = tk.Frame(self, bg='#2c3e50', height=150)
+        message_frame.grid(row=3, column=0, sticky='ew', padx=10, pady=5)
+        message_frame.grid_propagate(False)  # 固定高度
 
-        # 消息标签
-        tk.Label(message_frame, text="📝 消息记录", font=("微软雅黑", 10, "bold"),
-                 bg='#2c3e50', fg='#ffd700').pack(anchor=tk.W, padx=5, pady=2)
+        # 标题栏
+        title_frame = tk.Frame(message_frame, bg='#2c3e50')
+        title_frame.pack(fill=tk.X, padx=5, pady=2)
 
-        # 消息文本框
-        self.message_text = tk.Text(message_frame, height=6, font=("微软雅黑", 9),
+        tk.Label(title_frame, text="📝 消息记录", font=("微软雅黑", 10, "bold"),
+                 bg='#2c3e50', fg='#ffd700').pack(side=tk.LEFT)
+
+        # 清空按钮
+        clear_btn = tk.Button(title_frame, text="清空", font=("微软雅黑", 9),
+                              bg='#e74c3c', fg='#fff', padx=10, pady=2,
+                              command=self.clear_messages, cursor="hand2")
+        clear_btn.pack(side=tk.RIGHT)
+
+        # 消息文本框（带滚动条）
+        text_frame = tk.Frame(message_frame, bg='#2c3e50')
+        text_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        self.message_text = tk.Text(text_frame, height=5, font=("微软雅黑", 9),
                                     bg='#34495e', fg='#fff', wrap=tk.WORD,
                                     padx=10, pady=5)
-        self.message_text.pack(fill=tk.X, padx=5, pady=5)
 
         # 添加滚动条
-        message_scrollbar = tk.Scrollbar(self.message_text)
-        message_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.message_text.config(yscrollcommand=message_scrollbar.set)
-        message_scrollbar.config(command=self.message_text.yview)
+        message_scrollbar = tk.Scrollbar(text_frame, orient=tk.VERTICAL, command=self.message_text.yview)
+        self.message_text.configure(yscrollcommand=message_scrollbar.set)
 
-    def add_message(self, message):
+        self.message_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        message_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # 配置消息区域的标签
+        self.message_text.tag_config('info', foreground='#3498db')
+        self.message_text.tag_config('success', foreground='#2ecc71')
+        self.message_text.tag_config('warning', foreground='#f39c12')
+        self.message_text.tag_config('error', foreground='#e74c3c')
+        self.message_text.tag_config('battle', foreground='#e67e22')
+
+        # 初始消息
+        self.add_message("✨ 欢迎来到精灵世界！", 'success')
+        self.add_message("💡 点击'世界地图'探索不同区域", 'info')
+        self.add_message("🌿 点击'进入草丛'开始冒险", 'info')
+
+    def add_message(self, message, msg_type='info'):
         """添加消息到消息区域"""
         if hasattr(self, 'message_text'):
-            self.message_text.insert(tk.END, f"{message}\n")
-            self.message_text.see(tk.END)
+            # 根据消息类型添加标签
+            tag_map = {
+                'info': 'info',
+                'success': 'success',
+                'warning': 'warning',
+                'error': 'error',
+                'battle': 'battle'
+            }
+            tag = tag_map.get(msg_type, 'info')
+
+            # 插入消息
+            self.message_text.insert(tk.END, f"{message}\n", tag)
+
             # 自动滚动到底部
-            self.message_text.yview_moveto(1)
+            self.message_text.see(tk.END)
+
+            # 限制消息数量（保留最近100条）
+            line_count = int(self.message_text.index('end-1c').split('.')[0])
+            if line_count > 100:
+                self.message_text.delete('1.0', f'{line_count - 80}.0')
+
+    def clear_messages(self):
+        """清空消息"""
+        if hasattr(self, 'message_text'):
+            self.message_text.delete(1.0, tk.END)
+            self.add_message("📝 消息记录已清空", 'info')
 
     def update_stats(self):
         """更新状态栏"""
@@ -220,6 +327,12 @@ class GameView(tk.Frame):
         self.score_label.config(text=f"分数：{state['score']}")
         self.balls_label.config(text=f"精灵球：{state['poke_balls']}")
 
+        # 更新地点信息
+        current_loc = state.get('current_location', '未知')
+        loc_desc = state.get('location_description', '')
+        self.location_label.config(text=f"📍 当前位置：{current_loc}")
+        self.location_desc_label.config(text=f"📝 {loc_desc[:60]}..." if len(loc_desc) > 60 else f"📝 {loc_desc}")
+
         # 更新图鉴列表
         if self.controller.player:
             pokemon_count = state['pokemon_count']
@@ -227,7 +340,9 @@ class GameView(tk.Frame):
 
             # 更新统计信息
             unique_count = self.controller.player.get_unique_pokemon_count()
-            self.pokedex_stats.config(text=f"已收集: {pokemon_count}只 | 种类: {unique_count}种")
+            total_available = len(self.controller.pokemon_factory.get_all_pokemon_names())
+            self.pokedex_stats.config(
+                text=f"{pokemon_count}只 | {unique_count}种 | {int(unique_count / total_available * 100)}%")
 
             # 更新列表
             self.update_pokedex_list()
@@ -253,21 +368,38 @@ class GameView(tk.Frame):
                 display_text = f"{status} {i:2d}. {pokemon.emoji} {pokemon.name}  HP: {pokemon.hp}/{pokemon.max_hp} ({hp_percent}%)"
                 self.pokemon_listbox.insert(tk.END, display_text)
 
-                # 根据属性设置不同背景色（可选）
-                if pokemon.element.value == "火":
-                    self.pokemon_listbox.itemconfig(i - 1, bg='#8B4513')
-                elif pokemon.element.value == "水":
-                    self.pokemon_listbox.itemconfig(i - 1, bg='#2980B9')
-                elif pokemon.element.value == "草":
-                    self.pokemon_listbox.itemconfig(i - 1, bg='#27AE60')
-                elif pokemon.element.value == "电":
-                    self.pokemon_listbox.itemconfig(i - 1, bg='#F39C12')
+                # 根据属性设置不同背景色
+                colors = {
+                    "火": '#8B4513',
+                    "水": '#2980B9',
+                    "草": '#27AE60',
+                    "电": '#F39C12',
+                    "飞行": '#7F8C8D',
+                    "一般": '#95A5A6'
+                }
+                bg_color = colors.get(pokemon.element.value, '#34495e')
+                self.pokemon_listbox.itemconfig(i - 1, bg=bg_color)
+
+    def open_map(self):
+        """打开世界地图"""
+        from views.map_view import MapView
+
+        def on_location_selected(location_name):
+            """地点选择回调"""
+            if self.controller.move_to_location(location_name):
+                self.add_message(f"🗺️ 你来到了 {location_name}！", 'success')
+                self.update_stats()
+            else:
+                self.add_message(f"❌ 无法前往 {location_name}！", 'error')
+
+        MapView(self, self.controller.game_map, on_location_selected)
 
     def on_pokemon_selected(self, event):
-        """图鉴项目被选中"""
+        """图鉴项目被选中（单击）"""
         selection = self.pokemon_listbox.curselection()
         if selection and self.controller.player:
             index = selection[0]
+            # 获取排序后的精灵列表
             sorted_pokemons = sorted(self.controller.player.pokemons, key=lambda p: p.name)
             if index < len(sorted_pokemons):
                 pokemon = sorted_pokemons[index]
@@ -278,6 +410,7 @@ class GameView(tk.Frame):
         selection = self.pokemon_listbox.curselection()
         if selection and self.controller.player:
             index = selection[0]
+            # 获取排序后的精灵列表
             sorted_pokemons = sorted(self.controller.player.pokemons, key=lambda p: p.name)
             if index < len(sorted_pokemons):
                 pokemon = sorted_pokemons[index]
@@ -286,18 +419,8 @@ class GameView(tk.Frame):
     def show_pokemon_preview(self, pokemon):
         """显示精灵预览（在消息区域）"""
         hp_percent = int(pokemon.get_hp_percentage() * 100)
-        preview_text = f"""
-        📖 精灵预览 - {pokemon.emoji} {pokemon.name}
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        属性: {pokemon.element.value}
-        HP: {pokemon.hp}/{pokemon.max_hp} ({hp_percent}%)
-        攻击力: {pokemon.attack}
-        稀有度: {int(pokemon.catch_rate * 100)}%
-        描述: {pokemon.description}
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        💡 双击查看详细信息
-        """
-        self.add_message(preview_text)
+        preview_text = f"📖 {pokemon.emoji} {pokemon.name} | 属性:{pokemon.element.value} | HP:{pokemon.hp}/{pokemon.max_hp}({hp_percent}%) | 攻击:{pokemon.attack}"
+        self.add_message(preview_text, 'info')
 
     def show_pokemon_detail(self, pokemon):
         """显示精灵详细信息的弹出窗口"""
@@ -367,7 +490,7 @@ class GameView(tk.Frame):
             ("📊 当前HP比例", f"{int(pokemon.get_hp_percentage() * 100)}%")
         ]
 
-        for i, (stat_name, stat_value) in enumerate(stats):
+        for stat_name, stat_value in stats:
             stat_frame = tk.Frame(info_frame, bg='#2c3e50')
             stat_frame.pack(fill=tk.X, pady=5)
 
@@ -525,7 +648,7 @@ class GameView(tk.Frame):
         if self.controller.current_battle:
             pokemon.heal()
             self.update_stats()
-            self.add_message(f"💚 {pokemon.name} 已被完全治愈！")
+            self.add_message(f"💚 {pokemon.name} 已被完全治愈！", 'success')
 
             # 更新战斗显示
             if self.wild_display_widgets:
@@ -565,15 +688,15 @@ class GameView(tk.Frame):
             self.catch_btn.config(state=tk.NORMAL)
             self.run_btn.config(state=tk.NORMAL)
 
-            self.add_message(f"🌿 进入草丛，遇到了野生 {wild_pokemon.name}！")
+            self.add_message(f"🌿 进入草丛，遇到了野生 {wild_pokemon.name}！", 'battle')
         else:
-            self.add_message("已经在战斗中了！")
+            self.add_message("⚠️ 已经在战斗中了！", 'warning')
 
     def attack_pokemon(self):
         """攻击精灵"""
         result = self.controller.attack_pokemon()
         if result:
-            self.add_message(f"⚔️ 你对野生精灵造成了 {result['damage']} 点伤害！")
+            self.add_message(f"⚔️ 你对野生精灵造成了 {result['damage']} 点伤害！", 'battle')
 
             # 更新显示
             wild_pokemon = self.controller.current_battle.wild_pokemon
@@ -581,10 +704,10 @@ class GameView(tk.Frame):
             strategy.update_wild_display(self.wild_display_widgets, wild_pokemon)
 
             if not result['is_alive']:
-                self.add_message(f"💀 野生精灵倒下了...")
+                self.add_message(f"💀 野生精灵倒下了...", 'error')
                 self.end_battle()
             else:
-                self.add_message(f"💥 野生精灵对你造成了 {result['counter_damage']} 点伤害！")
+                self.add_message(f"💥 野生精灵对你造成了 {result['counter_damage']} 点伤害！", 'battle')
 
             self.update_stats()
 
@@ -592,7 +715,7 @@ class GameView(tk.Frame):
         """捕捉精灵"""
         result = self.controller.catch_pokemon()
         if result:
-            self.add_message(f"🎾 扔出了精灵球！")
+            self.add_message(f"🎾 扔出了精灵球！", 'info')
             self.update_stats()
 
             # 延迟显示结果
@@ -601,15 +724,15 @@ class GameView(tk.Frame):
     def catch_result(self, result):
         """捕捉结果"""
         if result['success']:
-            self.add_message(f"✨ 捕捉成功！恭喜你收服了 {result['pokemon'].name}！")
-            self.add_message(f"🎉 获得 {result['score_gained']} 分！")
+            self.add_message(f"✨ 捕捉成功！恭喜你收服了 {result['pokemon'].name}！", 'success')
+            self.add_message(f"🎉 获得 {result['score_gained']} 分！", 'success')
             self.update_stats()
             self.end_battle()
         else:
-            self.add_message(f"😭 精灵球摇晃了几下...野生精灵挣脱了！")
+            self.add_message(f"😭 精灵球摇晃了几下...野生精灵挣脱了！", 'warning')
             # 可能逃跑
             if random.random() < 0.3:
-                self.add_message(f"🏃 野生精灵逃跑了！")
+                self.add_message(f"🏃 野生精灵逃跑了！", 'info')
                 self.end_battle()
 
     def run_away(self):
@@ -617,10 +740,10 @@ class GameView(tk.Frame):
         result = self.controller.run_away()
         if result:
             if result['success']:
-                self.add_message("🏃 成功逃跑！")
+                self.add_message("🏃 成功逃跑！", 'success')
                 self.end_battle()
             else:
-                self.add_message("😰 逃跑失败！")
+                self.add_message("😰 逃跑失败！", 'warning')
 
     def end_battle(self):
         """结束战斗"""
@@ -637,7 +760,7 @@ class GameView(tk.Frame):
                                          text="✨ 点击下方按钮进入草丛 ✨",
                                          font=("微软雅黑", 14),
                                          bg='#27ae60', fg='#f1c40f')
-        self.wild_placeholder.pack(expand=True)
+        self.wild_placeholder.pack(expand=True, pady=50)
 
         # 禁用战斗按钮
         self.attack_btn.config(state=tk.DISABLED)
@@ -650,7 +773,7 @@ class GameView(tk.Frame):
         """切换显示模式"""
         # 判断当前模式
         current_mode = "text" if isinstance(self.controller.display_strategy,
-                                            TextDisplayStrategy) else "graphic"
+                                             TextDisplayStrategy) else "graphic"
         new_mode = "graphic" if current_mode == "text" else "text"
 
         # 切换模式
@@ -672,7 +795,7 @@ class GameView(tk.Frame):
                 self.wild_container, wild_pokemon
             )
 
-        self.add_message(f"🔄 已切换到{new_mode}模式")
+        self.add_message(f"🔄 已切换到{new_mode}模式", 'info')
 
     def open_shop(self):
         """打开商店"""
@@ -694,7 +817,7 @@ class GameView(tk.Frame):
 
             self.update_stats()
             self.end_battle()
-            self.add_message("✨ 游戏已重置！")
+            self.add_message("✨ 游戏已重置！", 'success')
 
     def exit_game(self):
         """退出游戏"""

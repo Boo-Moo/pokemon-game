@@ -1,7 +1,8 @@
 # factories/pokemon_factory.py
 import random
-from typing import List
+from typing import List, Dict
 from models.pokemon import Pokemon, ElementType
+from models.map import Location, TerrainType
 
 
 class PokemonFactory:
@@ -51,6 +52,14 @@ class PokemonFactory:
                 8, "伊布", 45, 12, 0.5, "🦊",
                 "一般系精灵，可以进化成多种形态", ElementType.NORMAL, "mouse", "#D2B48C"
             ),
+            "超梦": Pokemon(
+                9, "超梦", 120, 25, 0.05, "🧬",
+                "传说精灵，拥有强大的超能力", ElementType.NORMAL, "default", "#A569BD"
+            ),
+            "快龙": Pokemon(
+                10, "快龙", 110, 22, 0.08, "🐉",
+                "龙系精灵，非常稀有", ElementType.FLYING, "dragon", "#5DADE2"
+            )
         }
 
     def create_pokemon(self, name: str) -> Pokemon:
@@ -64,10 +73,34 @@ class PokemonFactory:
             )
         return None
 
-    def create_random_pokemon(self) -> Pokemon:
-        """创建随机精灵"""
+    def create_random_pokemon(self, location_name: str = None) -> Pokemon:
+        """创建随机精灵（根据地点）"""
+        if location_name:
+            # 根据地点返回特定精灵
+            location_pokemon = self._get_location_pokemon(location_name)
+            if location_pokemon:
+                name = random.choice(location_pokemon)
+                return self.create_pokemon(name)
+
+        # 随机选择
         name = random.choice(list(self._pokemon_templates.keys()))
         return self.create_pokemon(name)
+
+    def _get_location_pokemon(self, location_name: str) -> List[str]:
+        """获取特定地点可能出现的精灵"""
+        location_spawns = {
+            "初始小镇": ["波波", "伊布"],
+            "森林入口": ["妙蛙种子", "皮卡丘", "波波"],
+            "幽暗洞穴": ["可达鸭", "皮卡丘"],
+            "火焰山脉": ["小火龙"],
+            "湖泊": ["杰尼龟", "可达鸭"],
+            "古代遗迹": ["卡比兽", "超梦"],
+            "冰霜雪原": ["伊布"],
+            "天空之塔": ["快龙"],
+            "精灵之森": ["皮卡丘", "妙蛙种子", "伊布"],
+            "神秘洞窟": ["卡比兽", "超梦"]
+        }
+        return location_spawns.get(location_name, list(self._pokemon_templates.keys()))
 
     def get_all_pokemon_names(self) -> List[str]:
         """获取所有精灵名称"""
@@ -79,3 +112,7 @@ class PokemonFactory:
             if pokemon.id == pokemon_id:
                 return self.create_pokemon(pokemon.name)
         return None
+
+    def get_location_pokemon_list(self, location_name: str) -> List[str]:
+        """获取地点可遇到的精灵列表"""
+        return self._get_location_pokemon(location_name)
