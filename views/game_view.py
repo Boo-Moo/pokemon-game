@@ -46,25 +46,43 @@ class GameView(tk.Frame):
         status_frame = tk.Frame(self, bg='#27ae60', height=80)
         status_frame.pack(fill=tk.X, padx=10, pady=5)
 
-        self.name_label = tk.Label(status_frame, text="",
+        # 第一行：玩家信息
+        info_frame = tk.Frame(status_frame, bg='#27ae60')
+        info_frame.pack(fill=tk.X, pady=5)
+
+        self.name_label = tk.Label(info_frame, text="",
                                    font=("微软雅黑", 12, "bold"),
                                    bg='#27ae60', fg='#fff')
-        self.name_label.pack(side=tk.LEFT, padx=20, pady=10)
+        self.name_label.pack(side=tk.LEFT, padx=20)
 
-        self.score_label = tk.Label(status_frame, text="分数：0",
+        self.score_label = tk.Label(info_frame, text="分数：0",
                                     font=("微软雅黑", 12, "bold"),
                                     bg='#27ae60', fg='#ffd700')
-        self.score_label.pack(side=tk.LEFT, padx=20, pady=10)
+        self.score_label.pack(side=tk.LEFT, padx=20)
 
-        self.balls_label = tk.Label(status_frame, text="精灵球：0",
+        self.balls_label = tk.Label(info_frame, text="精灵球：0",
                                     font=("微软雅黑", 12, "bold"),
                                     bg='#27ae60', fg='#fff')
-        self.balls_label.pack(side=tk.LEFT, padx=20, pady=10)
+        self.balls_label.pack(side=tk.LEFT, padx=20)
 
-        self.pokemon_count_label = tk.Label(status_frame, text="图鉴：0只",
+        self.pokemon_count_label = tk.Label(info_frame, text="图鉴：0只",
                                             font=("微软雅黑", 12, "bold"),
                                             bg='#27ae60', fg='#fff')
-        self.pokemon_count_label.pack(side=tk.LEFT, padx=20, pady=10)
+        self.pokemon_count_label.pack(side=tk.LEFT, padx=20)
+
+        # 第二行：地点信息
+        location_frame = tk.Frame(status_frame, bg='#27ae60')
+        location_frame.pack(fill=tk.X, pady=5)
+
+        self.location_label = tk.Label(location_frame, text="",
+                                       font=("微软雅黑", 11),
+                                       bg='#27ae60', fg='#ffd700')
+        self.location_label.pack(side=tk.LEFT, padx=20)
+
+        self.location_desc_label = tk.Label(location_frame, text="",
+                                            font=("微软雅黑", 9),
+                                            bg='#27ae60', fg='#bdc3c7')
+        self.location_desc_label.pack(side=tk.LEFT, padx=20)
 
     def setup_wild_area(self, parent):
         """设置野生精灵区域"""
@@ -151,6 +169,12 @@ class GameView(tk.Frame):
         bottom_frame = tk.Frame(self, bg='#27ae60')
         bottom_frame.pack(fill=tk.X, padx=10, pady=10)
 
+        # 添加地图按钮
+        map_btn = tk.Button(bottom_frame, text="🗺️ 世界地图", font=("微软雅黑", 12, "bold"),
+                            bg='#9b59b6', fg='#fff', padx=30, pady=10,
+                            command=self.open_map, cursor="hand2")
+        map_btn.pack(side=tk.LEFT, padx=10)
+
         enter_btn = tk.Button(bottom_frame, text="🌿 进入草丛", font=("微软雅黑", 12, "bold"),
                               bg='#f39c12', fg='#fff', padx=30, pady=10,
                               command=self.enter_grass, cursor="hand2")
@@ -219,6 +243,12 @@ class GameView(tk.Frame):
         self.name_label.config(text=f"训练家：{state['player_name']}")
         self.score_label.config(text=f"分数：{state['score']}")
         self.balls_label.config(text=f"精灵球：{state['poke_balls']}")
+
+        # 更新地点信息
+        current_loc = state.get('current_location', '未知')
+        loc_desc = state.get('location_description', '')
+        self.location_label.config(text=f"📍 当前位置：{current_loc}")
+        self.location_desc_label.config(text=f"📝 {loc_desc[:50]}...")
 
         # 更新图鉴列表
         if self.controller.player:
@@ -415,6 +445,19 @@ class GameView(tk.Frame):
                                      command=lambda: self.heal_pokemon(pokemon))
                 heal_btn.pack(side=tk.LEFT, padx=10)
 
+    def open_map(self):
+        """打开世界地图"""
+        from views.map_view import MapView
+
+        def on_location_selected(location_name):
+            """地点选择回调"""
+            if self.controller.move_to_location(location_name):
+                self.add_message(f"🗺️ 你来到了 {location_name}！")
+                self.update_stats()
+            else:
+                self.add_message("❌ 无法前往该地点！")
+
+        MapView(self, self.controller.game_map, on_location_selected)
     def _draw_pokemon_detail(self, canvas, pokemon):
         """绘制精灵详情大图"""
         canvas.delete("all")
